@@ -2,7 +2,7 @@
 
 Extend the Clojure LispReader with non-Lisp-ish DSLs
 
-**WARNING! Do this at home --- ONLY!**
+**WARNING! Do this at home -- ONLY!**
 
 ## Lisp-ish DSLs
 
@@ -27,7 +27,7 @@ JVM: build the grammar, let the user write their input to some file
 and use the parser to consume that file.
 
 But sometimes you may wish to just write the DSL input **in your
-Clojure code** --- like this:
+Clojure code** -- like this:
 
 	(def foo #[42 - 3 * 7])
 	#[foo = 42 -3 * 7]
@@ -83,20 +83,65 @@ I decided to use the first Clojure form following the ```#[``` to control the gr
 
 Example: ```#[sql select * from table]```
 
-## Registering grammars
+## Registering DSLs
 
-**TODO**
+So how do we map ```sql``` to the grammar? I think that Clojure's
+Namespaces and Var's are a great way to *register* stuff. So instead
+of defining one myself I just use (namespace qualified) symbols.
 
-So how do we map ```sql``` to the grammar?
+Like: ```#[h42.foobar.sql select * from table]```
+
+**TODO**: These symbols have to resolve to a function [...]
+
+So you're registering a function -- not a grammar.
 
 ## Defining grammars
 
+When you think about it you may ask: could I -- as a special use case
+-- define an instaparse grammar (or any other grammar) within the
+Clojure code and build a function that I could then use to process DSL
+input? Like this:
+
+	(def my-dsl #[:extended-lisp-reader/def-grammar <instaparse-grammar>])
+	(def stmt #[my-dsl select * from foo])
+
 **TODO**
 
-	#[:def-grammar ...]
+## Semantics
+
+**TODO: this is my PLAN to go. Hope this works :)**
+
+When you're consuming DLS with a parser you usually build an AST
+first. Then you walk this AST and build up some data structure which
+you pass to some sort if *interpreter* (there are parsers that let you
+build that data structure as part of the parsing process;
+e.g. https://theantlrguy.atlassian.net/wiki/display/ANTLR4/Actions+and+Attributes).
+
+In Clojure we have ```clojure.lang.Compiler```. So all we really have
+to do is build the AST (that's what instaparse gives us) and then
+post-walk the tree and **produce clojure data structures** which will
+be given to the Compiler by the LispReader. This way we can (re-)use
+any macro and function we have. We can use the Lisp-ish macros and
+functions and build Lisp-ish DSLs if we like and have tests against
+that and use them as usual.
+
+And if we ever wanted a non-Lisp-ish DSL we can just build one and
+re-use all the tested stuff we already have. No extra
+wheel-re-inventing bug-ridden ad-hoc interpreter needed (which you
+need for your usual Java solution -- see for example
+http://bkiers.blogspot.de/2011/03/7-interpreting-and-evaluating-tl-i.html;
+of course one can generate Java code as well
+http://stackoverflow.com/questions/24766006/getting-antlr-to-generate-a-script-interpreter).
+
+**We'll get a compiled DSL!**
 
 ## Usage
 
 **TODO**
+
+* Example: use grammar
+* Exmaple: define & use grammar
+* Will work from the REPL, Swank, CCW(?), nREPL
+
 
 
