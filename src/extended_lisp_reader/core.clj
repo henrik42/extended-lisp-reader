@@ -4,10 +4,6 @@
             [instaparse.core :as insta]
             [instaparse.failure :as instaf]))
 
-;;  (:require [extended-lisp-reader use-dsl define-dsl]))
-
-(.println System/out "(ns extended-lisp-reader.core)")
-
 (defn parse [parser text]
   (let [ast (parser text)
         res (when-not (insta/failure? ast) ast)]
@@ -33,12 +29,16 @@
         (throw (RuntimeException. (format "Grammarfile '%s' not found." r))))))
 
 (defn embeded-dsl-reader [a-reader dispatch-char]
-  (let [grammar-id (clojure.lang.LispReader/read a-reader true nil true)
-        grammar (grammar-for grammar-id)
-        parser (insta/parser grammar :string-ci true :total true)
-        ast (parse! parser a-reader)]
-    ast))
+  (let [fn-sym (clojure.lang.LispReader/read a-reader true nil true)
+        fn-var (or (ns-resolve *ns* fn-sym)
+                  (throw (RuntimeException. (format "Could not resolve symbol %s" fn-sym))))
+        consuming-fn (or @fn-var
+                         (throw (RuntimeException. (format "Symbol %s resolved to var %s which is nil." fn-sym fn-var))))
+        _ (.println System/out (format "sym = %s  ns = %s  a-var = %s  fn = %s" fn-sym *ns* fn-var consuming-fn))
+        ]
+    (consuming-fn a-reader)))
 
+#_
 (defn install-embeded-dsl-reader! []
   (let [lisp-reader-dispatch-macros
         (.get
