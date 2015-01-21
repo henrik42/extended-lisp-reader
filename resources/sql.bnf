@@ -1,0 +1,20 @@
+sql = _? select-clause _?
+ddl = _? select-clause _?
+
+<_> = #"[ \r\n]+"
+a-name = #"[A-Za-z_][A-Za-z_0-9]*"
+<exposed-name> = a-name
+column-name = (a-name ".")? a-name
+new-column-name = a-name
+
+expression = expression-aux (_ "operator" expression-aux)*
+expression-aux = column-name 
+
+<select-clause> = 
+	      "SELECT" 
+	      (_ ("DISTINCT" | "ALL"))?
+	      _ ("*" 
+	      	| select-clause-aux (_? "," _? select-clause-aux)* )
+
+<select-clause-aux> = exposed-name ".*" 
+		   | expression (_ ("AS" _)? new-column-name)?

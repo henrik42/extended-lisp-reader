@@ -17,7 +17,7 @@
   <scm>
     <connection>scm:git:git://github.com/henrik42/extended-lisp-reader.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/henrik42/extended-lisp-reader.git</developerConnection>
-    <tag>7829eaf54b17b94abb312bafa0cf3b9ab15fd91f
+    <tag>c46bcd17825c3213a20fd91b2860e4ca14f6ecdc
 </tag>
     <url>https://github.com/henrik42/extended-lisp-reader</url>
   </scm>
@@ -64,6 +64,11 @@
     </repository>
   </repositories>
   <dependencies>
+    <dependency>
+      <groupId>org.clojure</groupId>
+      <artifactId>clojure</artifactId>
+      <version>1.5.1</version>
+    </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.nrepl</artifactId>
