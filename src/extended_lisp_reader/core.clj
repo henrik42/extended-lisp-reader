@@ -28,6 +28,11 @@
     (or (io/resource r)
         (throw (RuntimeException. (format "Grammar file '%s' not found." r))))))
 
+(defn insta-parser-for [grammar-id]
+  (let [grammar (grammar-for grammar-id)
+        parser (insta/parser grammar :string-ci true :total true)]
+    parser))
+
 (defn embeded-dsl-reader [a-reader dispatch-char]
   (let [fn-sym (clojure.lang.LispReader/read a-reader true nil true)
         a-ns (.deref clojure.lang.RT/CURRENT_NS)
@@ -47,4 +52,6 @@
            (.setAccessible true))
          nil)]
     (aset lisp-reader-dispatch-macros \[ embeded-dsl-reader)))
+
+(install-embeded-dsl-reader)
 
