@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
             [instaparse.core :as insta]
+            [extended-lisp-reader.parsing :refer :all]
             [extended-lisp-reader.core :refer :all]))
 
 (defn- consume-string [s]
