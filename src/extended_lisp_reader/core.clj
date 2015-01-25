@@ -1,11 +1,14 @@
 (ns extended-lisp-reader.core
   (:require [clojure.java.io :as io]
-            [clojure.pprint :as pp]
             [instaparse.core :as insta]
+            [instaparse.cfg :as cfg]
+            [instaparse.reduction :as reduction]
+            [instaparse.gll :as gll]
             [instaparse.failure :as instaf]))
 
 (defn parse [parser text]
   (let [ast (parser text)
+        _ (.println System/out (format "AST is '%s'  parser = %s" ast parser))
         res (when-not (insta/failure? ast) ast)]
     (.println System/out (format "Parsing %s bytes %s returns '%s'" (.length text) text res))
     res))
@@ -32,6 +35,25 @@
   (let [grammar (grammar-for grammar-id)
         parser (insta/parser grammar :string-ci true :total true)]
     parser))
+
+
+
+
+(defn build-parser [spec]
+  (let [rules (gll/parse cfg/cfg :rules spec false)]
+    (if (instance? instaparse.gll.Failure rules) nil
+      (let [productions (map cfg/build-rule rules)
+            start-production (first (first productions))]
+        {:grammar (cfg/check-grammar (reduction/apply-standard-reductions :hiccup (into {} productions)))
+         :start-production start-production
+         :output-format :hiccup}))))
+
+(def cfg-parser :todo)
+
+;; Konsumiert aus dem Reader eine instaparse Grammatik
+;; und liefert einen parser.
+(defn insta-parser-for! [a-reader]
+  (parse! cfg-parser a-reader))
 
 (defn embeded-dsl-reader [a-reader dispatch-char]
   (let [fn-sym (clojure.lang.LispReader/read a-reader true nil true)
