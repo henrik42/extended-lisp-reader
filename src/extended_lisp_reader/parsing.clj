@@ -1,29 +1,36 @@
-(ns extended-lisp-reader.parsing
-  (:require [clojure.java.io :as io]
-            ;;[extended-lisp-reader.core :as core]
-            [instaparse.core :as insta]
-            [instaparse.cfg :as cfg]
-            [instaparse.reduction :as reduction]
-            [instaparse.gll :as gll]
-            [instaparse.failure :as instaf]))
+(ns extended-lisp-reader.parsing)
 
-(defn parse [parser text]
-  (let [ast (parser text)
-        _ (.println System/out (format "AST is '%s'  parser = %s" ast parser))
-        res (when-not (insta/failure? ast) ast)]
-    (.println System/out (format "Parsing %s bytes %s returns '%s'" (.length text) text res))
-    res))
-
+;; TODO/bug: successfull parse will miss boolean/false!! -> use constant instead!
 (defn parse! [parser a-reader]
+  "Consumes the reader until ```]``` is found. Then calls the parser
+   on the input string excluding the ```]```.
+
+   The parser must return ```nil``` if it cannot find a complete
+   successfull parse for the input string (it must not throw an
+   exception in this case). In this case the function recurs,
+   appending further input from the reader to the input that has been
+   read so far.
+
+   Otherwise the parser returns the AST for the given input string.
+
+   Returns the AST or throws an exception if EOT is reached. This
+   function implements a non-greedy parsing strategy: when an AST is
+   found, it is returned right away. The function will not try to find
+   further parses. So the language the parser parses should use
+   balanced [...]. Otherwise the non-greedy parsing strategy may find
+   a parse but leave input un-consumed in the reader which could be
+   parsed to give a longer successfull parse.
+  "
   (let [sb (StringBuilder.)]
     (loop []
-      (let [c (.read a-reader) ;; consume reader!
-            ;; EOF is a FAIL
-            _ (when (= -1 c) (throw (RuntimeException. (format "Cannot parse '%s'" sb))))
+      (let [c (.read a-reader) 
+            _ (when (= -1 c) (throw (RuntimeException.
+                                     (format "EOF reached. Cannot parse '%s'"
+                                             sb))))
             c (char c)
-            sb (.append sb c)] ;; build-up head
+            sb (.append sb c)]
         ;;(.println System/out (format "char = '%s'  head = '%s'" c (str sb)))
-        (if-not (= c \]) (recur) ;; try parse on "]" only; DSL should have balanced "[...]"
-                (if-let [p (parse parser (.substring sb 0 (dec (.length sb))))] p ;; try parse and return on success
-                        (recur))))))) ;; else keep going
-
+        (if-not (= c \]) (recur) 
+                (if-let [ast (parser (.substring sb 0 (dec (.length sb))))]
+                  ast
+                  (recur))))))) 

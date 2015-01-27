@@ -68,7 +68,8 @@ the ```LispReader``` with the ```java.io.PushbackReader``` that carries
 further input. This array is used to *dispatch* on a character after
 having found a ```#``` (reader macros). As of Clojure 1.6 this array
 does not have an entry 
-for ```[```. So for this lib I decided to use ```#[``` in order to dispatch to my *embeded DSL reader*.
+for ```[```. So for this lib I decided to use ```#[``` in order to dispatch to
+my *embedded DSL reader*.
 
 Others have done this before: http://briancarper.net/blog/449/clojure-reader-macros
 
