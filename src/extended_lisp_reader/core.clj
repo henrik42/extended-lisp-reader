@@ -1,7 +1,7 @@
 (ns extended-lisp-reader.core)
 
 ;; TODO: which namespace does the resolve take place in **exactly**?
-(defn user-reader-macro-reader! [a-reader ignored-dispatch-char]
+(defn embeded-lang-reader! [a-reader ignored-dispatch-char]
   "Consumes one form via ```clojure.lang.LispReader/read``` from the
    given ```java.io.PushbackReader```. The form has to be a symbol
    which will be resolved in the current namespace. The resolved var
@@ -17,7 +17,7 @@
    place on the returned value. This function is not meant to be
    called by user code but should be hooked into
    ```cloure.lang.LispReader``` via
-   ```install-user-reader-macro-reader!```.
+   ```install-embeded-lang-reader!```.
    "
   (let [fn-sym (clojure.lang.LispReader/read a-reader true nil true)
         a-ns (.deref clojure.lang.RT/CURRENT_NS)
@@ -35,20 +35,20 @@
                                    fn-sym *ns* fn-var consuming-fn))]
     (consuming-fn a-reader)))
 
-(defn install-user-reader-macro-reader! []
-  "Put ```user-reader-macro-reader!``` into the static array
+(defn install-embeded-lang-reader! []
+  "Put ```embeded-lang-reader!``` into the static array
    ```clojure.lang.LispReader/dispatchMacros``` at index
    ```\\]```. After this the ```clojure.lang.LispReader``` will
-   delegate to ```user-reader-macro-reader!``` when it encounters a
-   form starting with ```#[```.
+   delegate to ```embeded-lang-reader!``` when it encounters a form
+   starting with ```#[```.
   "
   (let [lisp-reader-dispatch-macros
         (.get
          (doto (.getDeclaredField clojure.lang.LispReader "dispatchMacros")
            (.setAccessible true))
          nil)]
-    (aset lisp-reader-dispatch-macros \[ user-reader-macro-reader!)))
+    (aset lisp-reader-dispatch-macros \[ embeded-lang-reader!)))
 
 ;; Install when loading this namespace.
-(install-user-reader-macro-reader!)
+(install-embeded-lang-reader!)
 
