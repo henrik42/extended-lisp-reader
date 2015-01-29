@@ -14,10 +14,10 @@
 ;; abgebildet werden, damit der Compiler anschließend auch was damit macht.
 
 ;; So definiert man die Grammatik über die API
-(def ab (partial parsing/parse! (insta/cfg-parser-for "s = ' ' 'a'* 'b'*")))
+(def ab1 (partial parsing/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
 
 ;; und so definiert man die Grammatik "inline"
-(def ab (partial parsing/parse! #[cfg s = ' ' 'a'* 'b'*]))
+(def ab2 (partial parsing/parse! #[cfg s = 'a'* 'b'*]))
 
 ;; run via
 ;; lein run -m extended-lisp-reader.example
@@ -25,5 +25,7 @@
   (.println System/out (str "SQL1: " ((insta/parser-for "sql") "select foo.*, bar.*")))
   (.println System/out (str "ABs1 " ((insta/cfg-parser-for "s = 'a'* 'b'*") "ab")))
   (.println System/out (str "SQL2: " #[sql select foo.*, bar.*]))
-  (.println System/out (str "ABs2: " #[ab aabbbb])))
+  (.println System/out (str "ABs2: " #[ab1 aabbbb]))
+  (.println System/out (str "ABs3: " #[ab2 aabbbb]))
+  )
   
