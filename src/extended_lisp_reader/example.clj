@@ -1,8 +1,7 @@
 (ns extended-lisp-reader.example
   "Note: you need to :require the namespace
-   ```extended-lisp-reader.core```. Otherwise the reader will not
-   understand the #[...] expressions in this file.
-  "
+  ```extended-lisp-reader.core```. Otherwise the reader will not
+  understand the embeded language forms like #[...] in this file."
   (:require [extended-lisp-reader.core]
             [extended-lisp-reader.stream-parser :as stream-parser]
             [extended-lisp-reader.instaparse-adapter :as insta]))
@@ -30,8 +29,14 @@
 ;; grammar is ill-formed). Otherwise it returns **a parser** that
 ;; parses the given grammar.
 ;;
-;; So insta/cfg-parser-for is a parser generator. You can apply such a
-;; generated parser like:
+;; Note: if the grammar is *syntactically correct* but sematically not
+;; (e.g. you have a symbol only on the right hand side of a grammar
+;; rule but not on the left side), an exception is thrown. See doc for
+;; ```extended-lisp-reader.instaparse-adapter/cfg-parser-for``` for
+;; details.
+;;
+;; So insta/cfg-parser-for is a **parser generator**. You can apply
+;; such a *generated parser* like:
 ;;
 ;; ((insta/cfg-parser-for "s = 'a'* 'b'*") "ab")
 ;;
@@ -43,22 +48,22 @@
 ;; language.
 (def cfg (partial stream-parser/parse! insta/cfg-parser-for))
 
-;; You can build stream parsing parsers just by using
-;; (insta/cfg-parser-for <grammar-string>)  directly - i.e. without using an
-;; embeded grammar expression but just the string equivalent.
+;; You can build stream parsing parsers by using (insta/cfg-parser-for
+;; <grammar-string>) directly -- i.e. without using an embeded
+;; language form but just the string equivalent.
 (def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
 
-;; und so definiert man die Grammatik "inline"
+;; And you can build such a parser with an embeded language form.
 (def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
 
-;; run via
-;; lein run -m extended-lisp-reader.example
+;; run this via ```lein run -m extended-lisp-reader.example```
 (defn -main []
   (.println System/out (str "SQL1: " ((insta/parser-for "sql") "select foo.*, bar.*")))
   (.println System/out (str "ABs1 " ((insta/cfg-parser-for "s = 'a'* 'b'*") "ab")))
   (.println System/out (str "SQL2: " #[sql select foo.*, bar.*]))
   (.println System/out (str "ABs2: " #[ab1 aabbbb]))
   (.println System/out (str "ABs3: " #[ab2 aabbbb]))
+  ;; Bug: this does not work - why?
   ;;(.println System/out (str "ABs4: " (#[cfg s = 'a'* 'b'*] "aabb")))
   )
   
