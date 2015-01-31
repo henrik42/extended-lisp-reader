@@ -11,6 +11,9 @@
     [ast (slurp r)]))
 
 (def sql (partial stream-parser/parse! (insta/parser-for "sql")))
+(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
+(def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
+(def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
 
 (def my-ns *ns*)
 
@@ -27,24 +30,13 @@
          #_ (.println System/out (format "Setting namespace to %s" n)))))))
 
 (deftest test-embeded-dsl-reader
-  (testing "Parse SQL DSL"
-    ;; compares just the parse
-    (is (= [:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"]
-           #[sql select foo.*, bar.*])))
-  #_ (testing "Parse SQL string as input"
-    ;; compares parse and tail 
-    (is (= [[:sql " " "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"] " (foo bar)"]
-           (consume-string "extended-lisp-reader.core-test/sql select foo.*, bar.*] (foo bar)"))))
-  #_ (testing "*ns*"
-    ;; compares parse and tail 
-    (is (= [[:sql " " "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"] " (foo bar)"]
-           (consume-string "sql select foo.*, bar.*] (foo bar)")))))
-  
-;; obacht!!! Man kann diesen Ausdruck nicht so ohne
-;; weiteres "auskommentieren", weil der #[..] Ausdruck auch
-;; "ausgeführt" wird, wenn #_ davor steht!!!! GOTCHA!
-;; #_ (deftest test-embeded-grammar-def
-;;  (testing "Define a parser from embeded grammar"
-;;    (is (= "foo"
-;;           #[make-parser select foo.*, bar.*]))))
+  (testing "Parse embeded SQL form."
+    (is (= #[sql select foo.*, bar.*]
+           [:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"])))
+  (testing "Parse SQL expression and check tail content"
+    (is (= (consume-string "extended-lisp-reader.core-test/sql select foo.*, bar.*] (foo bar)")
+           [[:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"] " (foo bar)"]))))
+
+;;#_ (def foo #[bar])
+
 
