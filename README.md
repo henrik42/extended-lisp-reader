@@ -1,16 +1,24 @@
 # extended-lisp-reader
 
-Extend the Clojure LispReader with non-Lisp-ish DSLs
+Extend the Clojure LispReader with non-Lisp-ish embeded language forms.
 
 **WARNING! Do this at home -- ONLY!**
 
-## Lisp-ish DSLs
+## Usage
+
+This lib has not been released so you'll have to get the source to use
+it.
+
+See ```extended-lisp-reader.example.clj``` for usage examples.
+
+## Motivation
 
 There are several features in Clojure that help you build DSLs (macros
-http://clojure.org/macros, Reader Macros
-http://clojure.org/reader). But these DSLs are still Lisp-ish in their
-grammar because the *parts* of these DSLs are still Clojure *forms*
-(i.e. they **must be** Clojure forms).
+http://clojure.org/macros, Reader Macros http://clojure.org/reader,
+tagged literals
+http://clojure.org/reader#The%20Reader--Tagged%20Literals). But these
+DSLs are still Lisp-ish in their grammar because the *parts* of these
+DSLs still have to be Clojure *forms*.
 
 Some links on Clojure & DSL:
 
@@ -19,12 +27,13 @@ Some links on Clojure & DSL:
 * http://storm.apache.org/documentation/Clojure-DSL.html
 * http://www.clojure.net/2012/02/22/DSL-Examples/
 * http://www.learnr.pro/content/17979-the-joy-of-clojure-thinking-the-clojure-way/327#1341569447:13244.835007405198
+* http://clojure-log.n01se.net/date/2008-11-06.html#19:38a
 
-If you want to offer a non-Lisp-ish DSL to others (e.g. customers) you
-can use one of the parsers (e.g. ANTLR http://www.antlr.org/,
-instaparse https://github.com/Engelberg/instaparse) available for the
-JVM: build the grammar, let the user write their input to some file
-and use the parser to consume that file.
+If you want to offer a non-Lisp-ish DSL, you can use one of the
+parsers (e.g. ANTLR http://www.antlr.org/, instaparse
+https://github.com/Engelberg/instaparse) available for the JVM: build
+the grammar, let the user write their input to some file and use the
+parser to consume that file.
 
 But sometimes you may wish to just write the DSL input **in your
 Clojure code** -- like this:
@@ -35,9 +44,7 @@ Clojure code** -- like this:
 
 ## Drawbacks
 
-There are good reasons **not to go this way** (see
-http://clojure-log.n01se.net/date/2008-11-06.html#19:38a). Among
-others:
+There are reasons **not to go this way**. Among others:
 
 * Other people will not understand what your code means ... although
   I've seen code that builds on macros a lot that is as hard to
@@ -63,13 +70,13 @@ to another version of Clojure.
 
 The ```LispReader``` uses two arrays for dispatching on the
 input. Here I use ```clojure.lang.LispReader/dispatchMacros``` which
-holds Clojure functions (```IFn```) that are called by
+holds Clojure functions (```IFn```) that are called by 
 the ```LispReader``` with the ```java.io.PushbackReader``` that carries
 further input. This array is used to *dispatch* on a character after
 having found a ```#``` (reader macros). As of Clojure 1.6 this array
 does not have an entry 
-for ```[```. So for this lib I decided to use ```#[``` in order to dispatch to
-my *embedded DSL reader*.
+for ```[```. So for this lib I decided to use ```#[``` in order to
+dispatch to my *embeded language form reader*.
 
 Others have done this before: http://briancarper.net/blog/449/clojure-reader-macros
 
@@ -80,7 +87,8 @@ the *tail*) must remain unconsumed in the ```PushbackReader``` so it can be
 consumed by further processing (driven by the ```LispReader```).
 
 Since I want to be able to use **diffent grammars in one file**
-I decided to use the first Clojure form following the ```#[``` to control the grammar.
+I decided to use the first Clojure form following the ```#[```
+to control the grammar.
 
 Example: ```#[sql select * from table]```
 
@@ -90,11 +98,12 @@ So how do we map ```sql``` to the grammar? I think that Clojure's
 Namespaces and Var's are a great way to *register* stuff. So instead
 of defining one myself I just use (namespace qualified) symbols.
 
-Like: ```#[h42.foobar.sql select * from table]```
+	(def sql (partial stream-parser/parse! (insta/parser-for "sql")))
+    #[sql select * from table]
 
-**TODO**: These symbols have to resolve to a function [...]
-
-So you're registering a function -- not a grammar.
+This symbol resolves to a function that consumes a Reader and returns
+the *value* of the form. So you're registering a function -- not a
+grammar.
 
 ## Defining grammars
 
@@ -103,14 +112,13 @@ When you think about it you may ask: could I -- as a special use case
 Clojure code and build a function that I could then use to process DSL
 input? Like this:
 
-	(def my-dsl #[:extended-lisp-reader/def-grammar <instaparse-grammar>])
-	(def stmt #[my-dsl select * from foo])
-
-**TODO**
-
+	(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
+	(def abs2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
+	#[ab1 aabbbb]
+	
 ## Semantics
 
-**TODO: this is my PLAN to go. Hope this works :)**
+**TODO: this is my PLAN to go. Not implemented yet**
 
 When you're consuming DLS with a parser you usually build an AST
 first. Then you walk this AST and build up some data structure which
@@ -135,14 +143,4 @@ of course one can generate Java code as well
 http://stackoverflow.com/questions/24766006/getting-antlr-to-generate-a-script-interpreter).
 
 **We'll get a compiled DSL!**
-
-## Usage
-
-**TODO**
-
-* Example: use grammar
-* Exmaple: define & use grammar
-* Will work from the REPL, Swank, CCW(?), nREPL
-
-
 
