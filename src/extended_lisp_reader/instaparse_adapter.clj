@@ -1,5 +1,6 @@
 (ns extended-lisp-reader.instaparse-adapter
   (:require [clojure.java.io :as io]
+            [extended-lisp-reader.stream-parser :as stream-parser]
             [instaparse.core :as insta]
             [instaparse.cfg :as cfg]
             [instaparse.reduction :as reduction]
@@ -69,3 +70,41 @@
                        :start-production start-production
                        :output-format :hiccup})]
           (partial parse parser)))))
+
+;; insta/cfg-parser-for is a parser that parses instaparse grammar
+;; expressions. You can use it like:
+;;
+;; (cfg-parser-for "s = 'a'* 'b'*")
+;;
+;; This will return nil if a parse cannot be found (i.e. if the
+;; grammar is ill-formed). Otherwise it returns **a parser** that
+;; parses the given grammar.
+;;
+;; Note: if the grammar is *syntactically correct* but sematically not
+;; (e.g. you have a symbol only on the right hand side of a grammar
+;; rule but not on the left side), an exception is thrown. See doc for
+;; ```extended-lisp-reader.instaparse-adapter/cfg-parser-for``` for
+;; details.
+;;
+;; So cfg-parser-for is a **parser generator**. You can apply
+;; such a *generated parser* like:
+;;
+;; ((cfg-parser-for "s = 'a'* 'b'*") "ab")
+;;
+;; Again, if you want to use this kind of generated parser to parse
+;; embedded instaparse grammars you have to wrap it with (partial
+;; stream-parser/parse!)
+;;
+;; So #[cfg-parser! s = 'a'* 'b'*] returns a parser that parses the specified
+;; language.
+
+;; cfg-parser!: <fn: <reader> -> <fn: <text> -> <AST>>>
+(def cfg-parser! (partial stream-parser/parse! cfg-parser-for))
+;; insta-cfg!: <fn: <reader> -> <fn: <reader> -> <AST>>>
+(def insta-cfg! #(partial stream-parser/parse! (cfg-parser! %)))
+
+;;((cfg-parser! (java.io.StringReader. "s = 'a'* 'b'*]...")) "aa") ; -> [:s "a" "a"]
+
+;; ab2: <fn: <reader> -> <AST>>
+;;(def ab2 (partial stream-parser/parse! #[cfg-parser! s = 'a'* 'b'*]))
+;;(def ab2 #[insta-cfg! s = 'a'* 'b'*])

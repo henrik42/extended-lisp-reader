@@ -20,41 +20,17 @@
 ;; stream-parser/parse!
 (def sql (partial stream-parser/parse! (insta/parser-for "sql")))
 
-;; insta/cfg-parser-for is a parser that parses instaparse grammar
-;; expressions. You can use it like:
-;;
-;; (insta/cfg-parser-for "s = 'a'* 'b'*")
-;;
-;; This will return nil if a parse cannot be found (i.e. if the
-;; grammar is ill-formed). Otherwise it returns **a parser** that
-;; parses the given grammar.
-;;
-;; Note: if the grammar is *syntactically correct* but sematically not
-;; (e.g. you have a symbol only on the right hand side of a grammar
-;; rule but not on the left side), an exception is thrown. See doc for
-;; ```extended-lisp-reader.instaparse-adapter/cfg-parser-for``` for
-;; details.
-;;
-;; So insta/cfg-parser-for is a **parser generator**. You can apply
-;; such a *generated parser* like:
-;;
-;; ((insta/cfg-parser-for "s = 'a'* 'b'*") "ab")
-;;
-;; Again, if you want to use this kind of generated parser to parse
-;; embedded instaparse grammars you have to wrap it with (partial
-;; stream-parser/parse!)
-;;
-;; So #[cfg s = 'a'* 'b'*] returns a parser that parses the specified
-;; language.
-(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
-
 ;; You can build stream parsing parsers by using (insta/cfg-parser-for
 ;; <grammar-string>) directly -- i.e. without using an embedded
 ;; language form but just the string equivalent.
 (def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
 
 ;; And you can build such a parser with an embedded language form.
-(def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
+(def ab2 (partial stream-parser/parse! #[insta/cfg-parser! s = 'a'* 'b'*]))
+
+;; insta-cfg! includes the (partial .... ) around cfg-parser! so its usage
+;; is even shorter
+(def ab3 #[insta/insta-cfg! s = 'a'* 'b'*])
 
 ;; run this via ```lein run -m extended-lisp-reader.example```
 (defn -main []
@@ -63,10 +39,11 @@
   (.println System/out (str "SQL2: " #[sql select foo.*, bar.*]))
   (.println System/out (str "ABs2: " #[ab1 aabbbb]))
   (.println System/out (str "ABs3: " #[ab2 aabbbb]))
+  (.println System/out (str "ABs4: " #[ab3 aabbbb]))
   )
 
-;; Why does (#[cfg s = 'a'* 'b'*] "aabb") not work?
-;(def ccc #[cfg s = 'a'* 'b'*])
+;; Why does (#[insta/cfg.parser! s = 'a'* 'b'*] "aabb") not work?
+;(def ccc #[insta/cfg-parser! s = 'a'* 'b'*])
 ;(ccc "aabb") ;-> [:s "a" "a" "b" "b"]
-;(#[cfg s = 'a'* 'b'*] "aabb") ;-> No matching ctor found for class clojure.core$partial$fn__4190
+;(#[insta/cfg-parser! s = 'a'* 'b'*] "aabb") ;-> java.lang.IllegalArgumentException: No matching ctor found for class clojure.core$partial$fn__4190
 

@@ -11,9 +11,9 @@
     [ast (slurp r)]))
 
 (def sql (partial stream-parser/parse! (insta/parser-for "sql")))
-(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
 (def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
-(def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
+(def ab2 (partial stream-parser/parse! #[insta/cfg-parser! s = 'a'* 'b'*]))
+(def ab3 #[insta/insta-cfg! s = 'a'* 'b'*])
 
 (def my-ns *ns*)
 
@@ -33,6 +33,9 @@
   (testing "Parse embedded SQL form."
     (is (= #[sql select foo.*, bar.*]
            [:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"])))
+  (testing "Parse embedded SQL form."
+    (is (= #[ab3 aabb]
+           [:s "a" "a" "b" "b"])))
   (testing "Parse SQL expression and check tail content"
     (is (= (consume-string "extended-lisp-reader.core-test/sql select foo.*, bar.*] (foo bar)")
            [[:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"] " (foo bar)"]))))

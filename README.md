@@ -12,6 +12,16 @@ to use it.
 
 See ```extended-lisp-reader/example.clj``` for usage examples.
 
+In short:
+
+* Define a parser for an instaparse grammar:
+
+		(def as-and-bs #[insta-cfg! s = 'a'* 'b'*])
+
+* And use it on some text:
+
+		#[as-and-bs aabb] ;-> [:s "a" "a" "b" "b"]
+
 ## Motivation
 
 There are several features in Clojure that help you build DSLs (macros
@@ -127,17 +137,16 @@ When you think about it you may ask: could I -- as a special use case
 Clojure code and build a function that I could then use to process DSL
 input according to this grammar? Like this:
 
-	(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
-	(def abs2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
-	#[ab1 aabbbb]
+	(def abs #[insta-cfg! s = 'a'* 'b'*])
+	#[abs aabbbb]
 
 So in this case we have **two embedded languages**:
 
-* ```cfg``` lets you define a parser/grammar with
-  ```#[cfg s = 'a'* 'b'*]```
+* ```insta-cfg!``` lets you define a parser/grammar with
+  ```#[insta-cfg! s = 'a'* 'b'*]```
 
-* and ```abs2``` uses this parser/grammar to consume input like
-  ```#[abs2 aabbbb]```
+* and ```abs``` uses this parser/grammar to consume input like
+  ```#[abs aabbbb]```
 
 ## Semantics
 
@@ -190,12 +199,13 @@ You'll have to use
 
 * This works (when put into ```example.clj```):
 
-		(def ccc #[cfg s = 'a'* 'b'*])
+	    (def ccc #[insta/cfg-parser! s = 'a'* 'b'*])
 		(ccc "aabb") ;-> [:s "a" "a" "b" "b"]
 
   But this doesn't:
 
-		(#[cfg s = 'a'* 'b'*] "aabb") ;-> No matching ctor found for class clojure.core$partial$fn__4190
+		(#[insta/cfg-parser! s = 'a'* 'b'*] "aabb")
+		;-> java.lang.IllegalArgumentException: No matching ctor found for class clojure.core$partial$fn__4190
 
 * Change ```extended-lisp-reader.instaparse-adapter/parser-for``` so
   that it accepts any instaparse parser (do not create that parser
@@ -208,16 +218,6 @@ You'll have to use
   becomes
 
 		(def sql (stream-parser/parser-for some-instaparse-parser))
-
-* Put ```extended-lisp-reader.example/cfg``` into
-  ```extended-lisp-reader.instaparse-adapter```. And change its
-  definition so that
-
-		(def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
-
-  becomes:
-
-		(def ab2 #[cfg s = 'a'* 'b'*])
 
 * Add functionality to bring *semantics* into the processing -- i.e. a
   function that is applied to the AST and which returns the Clojure
