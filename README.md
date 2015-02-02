@@ -7,21 +7,21 @@ forms.
 
 ## Usage
 
-This lib has not been released so you'll have to get the source to use
-it.
+This lib has not been released yet, so you'll have to get the source
+to use it.
 
-See ```extended-lisp-reader.example.clj``` for usage examples.
+See ```extended-lisp-reader/example.clj``` for usage examples.
 
 ## Motivation
 
 There are several features in Clojure that help you build DSLs (macros
-http://clojure.org/macros, Reader Macros http://clojure.org/reader,
+http://clojure.org/macros, reader macros http://clojure.org/reader,
 tagged literals
 http://clojure.org/reader#The%20Reader--Tagged%20Literals). But these
 DSLs are still Lisp-ish in their grammar because the *parts* of these
 DSLs still have to be Clojure *forms*.
 
-Some links on Clojure & DSL:
+Some links on Clojure & DSL & reader:
 
 * http://stackoverflow.com/questions/5457066/use-of-clojure-macros-for-dsls
 * https://pragprog.com/magazines/2011-07/growing-a-dsl-with-clojure
@@ -29,6 +29,7 @@ Some links on Clojure & DSL:
 * http://www.clojure.net/2012/02/22/DSL-Examples/
 * http://www.learnr.pro/content/17979-the-joy-of-clojure-thinking-the-clojure-way/327#1341569447:13244.835007405198
 * http://clojure-log.n01se.net/date/2008-11-06.html#19:38a
+* http://stackoverflow.com/questions/5746801/what-advantage-does-common-lisp-reader-macros-have-that-clojure-does-not-have
 
 If you want to offer a non-Lisp-ish DSL, you can use one of the
 parsers (e.g. ANTLR http://www.antlr.org/, instaparse
@@ -36,7 +37,7 @@ https://github.com/Engelberg/instaparse) available for the JVM: build
 the grammar, let the user write their input to some file and use the
 parser to consume that file. That will give you an AST (abstract
 syntax tree) which you have to *process* in some way -- usually this
-means you have to write some sort of *interpreter* for this
+means, you have to write some sort of *interpreter* for this
 language/AST.
 
 But sometimes you may wish to just write the DSL input **in your
@@ -55,8 +56,10 @@ There are reasons **not to go this way**. Among others:
   understand as my proposed extensions here ;-)
 
 * Using things that execute at *read time* introduces extra
-  complexity. But then again that's true for eval reader (#=),
-  record/type literal syntax and tagged literals as well.
+  complexity. But then again that's true for eval reader
+  (```#=(<forms>)```), record/type literal syntax
+  (```#<type>[<forms>]```) and tagged literals (```#<namespace>/<sym>
+  [<forms>]```) as well.
 
 * You'll screw up your favorite editor because it will have a hard
   time to tell which part of the files belongs to which grammar (for
@@ -86,7 +89,11 @@ does not have an entry
 for ```[```. So for this lib I decided to use ```#[``` in order to
 dispatch to my *embedded language form reader*.
 
-Others have done this before: http://briancarper.net/blog/449/clojure-reader-macros
+Others have done something similar before:
+
+* http://briancarper.net/blog/449/clojure-reader-macros
+
+* http://fulldisclojure.blogspot.de/2009/12/how-to-write-clojure-reader-macro.html
 
 This function must consume the *head* of the input (i.e. the
 passed in ```PushbackReader```) and find a successfull parse in
@@ -104,14 +111,14 @@ Example: ```#[sql select * from table]```
 
 So how do we map ```sql``` to the grammar? I think that Clojure's
 Namespaces and Var's are a great way to *register* stuff. So instead
-of defining one myself I just use (namespace qualified) symbols.
+of defining my own mechanism I just use (namespace qualified) symbols.
 
 	(def sql (partial stream-parser/parse! (insta/parser-for "sql")))
     #[sql select * from table]
 
-This symbol resolves to a function that consumes a Reader and returns
-the *value* of the form. So you're registering a function -- not a
-grammar.
+This symbol resolves to a function that consumes
+a ```java.io.PushbackReader``` and returns the *value* of the form. So
+you're registering a function -- not a grammar.
 
 ## Defining grammars
 
@@ -136,7 +143,7 @@ So in this case we have **two embedded languages**:
 
 **TODO: this is my PLAN to go. Not implemented yet**
 
-When you're consuming DLS with a parser you usually build an AST
+When you're consuming DSLs with a parser you usually build an AST
 first. Then you walk this AST and build up some data structure which
 you pass to some sort if *interpreter* (there are parsers that let you
 build that data structure as part of the parsing process;
@@ -171,7 +178,7 @@ So in the end we could get a **compiled embedded DSL!**
 
 You'll may be surprised that you cannot comment-out embedded language
 forms with ```#_``` in some cases (e.g. if ```foo``` has not been
-defined like in this example):
+defined -- like in this example):
 
 	#_ #[foo bar]
 
@@ -190,5 +197,30 @@ You'll have to use
 
 		(#[cfg s = 'a'* 'b'*] "aabb") ;-> No matching ctor found for class clojure.core$partial$fn__4190
 
+* Change ```extended-lisp-reader.instaparse-adapter/parser-for``` so
+  that it accepts any instaparse parser (do not create that parser
+  within the function). People will have such a parser if they're
+  using instaparse and should have control on how/when to construct
+  it. Change it so that
 
+		(def sql (partial stream-parser/parse! (insta/parser-for "sql")))
+
+  becomes
+
+		(def sql (stream-parser/parser-for some-instaparse-parser))
+
+* Put ```extended-lisp-reader.example/cfg``` into
+  ```extended-lisp-reader.instaparse-adapter```. And change its
+  definition so that
+
+		(def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
+
+  becomes:
+
+		(def ab2 #[cfg s = 'a'* 'b'*])
+
+* Add functionality to bring *semantics* into the processing -- i.e. a
+  function that is applied to the AST and which returns the Clojure
+  data structure that can be given to the Compiler (the equivalent of
+  a *form*).
 
