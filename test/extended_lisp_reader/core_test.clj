@@ -7,7 +7,7 @@
 
 (defn- consume-string [s]
   (let [r (java.io.PushbackReader. (io/reader (.getBytes s)))
-        ast (core/embeded-lang-reader! r \[)]
+        ast (core/embedded-lang-reader! r \[)]
     [ast (slurp r)]))
 
 (def sql (partial stream-parser/parse! (insta/parser-for "sql")))
@@ -29,8 +29,8 @@
          (in-ns (symbol (str n)))
          #_ (.println System/out (format "Setting namespace to %s" n)))))))
 
-(deftest test-embeded-dsl-reader
-  (testing "Parse embeded SQL form."
+(deftest test-embedded-dsl-reader
+  (testing "Parse embedded SQL form."
     (is (= #[sql select foo.*, bar.*]
            [:sql "SELECT" " " [:a-name "foo"] ".*" "," " " [:a-name "bar"] ".*"])))
   (testing "Parse SQL expression and check tail content"

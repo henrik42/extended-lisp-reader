@@ -1,6 +1,7 @@
 # extended-lisp-reader
 
-Extend the Clojure LispReader with non-Lisp-ish embeded language forms.
+Extend the Clojure LispReader with non-Lisp-ish embedded language
+forms.
 
 **WARNING! Do this at home -- ONLY!**
 
@@ -36,7 +37,7 @@ the grammar, let the user write their input to some file and use the
 parser to consume that file.
 
 But sometimes you may wish to just write the DSL input **in your
-Clojure code** -- like this:
+Clojure code** -- maybe like this:
 
 	(def foo #[42 - 3 * 7])
 	#[foo = 42 -3 * 7]
@@ -48,7 +49,11 @@ There are reasons **not to go this way**. Among others:
 
 * Other people will not understand what your code means ... although
   I've seen code that builds on macros a lot that is as hard to
-  understand as my proposed extensions here ;)
+  understand as my proposed extensions here ;-)
+
+* Using things that execute at *read time* introduces extra
+  complexity. But then again that's true for eval reader (#=),
+  record/type literal syntax and tagged literals as well.
 
 * You'll screw up your favorite editor because it will have a hard
   time to tell which part of the files belongs to which grammar (for
@@ -76,7 +81,7 @@ further input. This array is used to *dispatch* on a character after
 having found a ```#``` (reader macros). As of Clojure 1.6 this array
 does not have an entry 
 for ```[```. So for this lib I decided to use ```#[``` in order to
-dispatch to my *embeded language form reader*.
+dispatch to my *embedded language form reader*.
 
 Others have done this before: http://briancarper.net/blog/449/clojure-reader-macros
 

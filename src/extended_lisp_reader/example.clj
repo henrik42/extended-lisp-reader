@@ -1,7 +1,7 @@
 (ns extended-lisp-reader.example
   "Note: you need to :require the namespace
   ```extended-lisp-reader.core```. Otherwise the reader will not
-  understand the embeded language forms like #[...] in this file."
+  understand the embedded language forms like #[...] in this file."
   (:require [extended-lisp-reader.core]
             [extended-lisp-reader.stream-parser :as stream-parser]
             [extended-lisp-reader.instaparse-adapter :as insta]))
@@ -14,7 +14,7 @@
 ;;
 ;; ((insta/parser-for "sql") "select foo.*, bar.*")
 ;;
-;; If you want to use this parser for embeded language forms like
+;; If you want to use this parser for embedded language forms like
 ;; #[sql select foo.*, bar.*] you need a function that consumes a
 ;; reader/stream. You build such a "stream parsing parser" via
 ;; stream-parser/parse!
@@ -41,7 +41,7 @@
 ;; ((insta/cfg-parser-for "s = 'a'* 'b'*") "ab")
 ;;
 ;; Again, if you want to use this kind of generated parser to parse
-;; embeded instaparse grammars you have to wrap it with (partial
+;; embedded instaparse grammars you have to wrap it with (partial
 ;; stream-parser/parse!)
 ;;
 ;; So #[cfg s = 'a'* 'b'*] returns a parser that parses the specified
@@ -49,11 +49,11 @@
 (def cfg (partial stream-parser/parse! insta/cfg-parser-for))
 
 ;; You can build stream parsing parsers by using (insta/cfg-parser-for
-;; <grammar-string>) directly -- i.e. without using an embeded
+;; <grammar-string>) directly -- i.e. without using an embedded
 ;; language form but just the string equivalent.
 (def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
 
-;; And you can build such a parser with an embeded language form.
+;; And you can build such a parser with an embedded language form.
 (def ab2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
 
 ;; run this via ```lein run -m extended-lisp-reader.example```

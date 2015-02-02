@@ -1,6 +1,6 @@
 (ns extended-lisp-reader.core
   "An extension to ```clojure.lang.LispReader```. It allows you to put
-  **non-Lisp-ish embeded language forms** like #[<sym> <text>] into
+  **non-Lisp-ish embedded language forms** like #[<sym> <text>] into
   your Clojure code. The syntax (of <text>) and the semantics of this
   form is dictated by the function bound to <sym>.
 
@@ -15,7 +15,7 @@
   parser. See ```extended-lisp-reader.instaparse-adapter``` for an
   integration with the instaparse parser.")
 
-(defn embeded-lang-reader! [a-reader __ignored__dispatch-char]
+(defn embedded-lang-reader! [a-reader __ignored__dispatch-char]
   "Consumes one form (plus any following *Java whitespace*; i.e. ","
   is not consumed as whitespace) via
   ```clojure.lang.LispReader/read``` from the given
@@ -40,7 +40,7 @@
 
   This function is not meant to be called by user code but should be
   hooked into ```cloure.lang.LispReader``` via
-  ```install-embeded-lang-reader!```."
+  ```install-embedded-lang-reader!```."
   (let [fn-sym (clojure.lang.LispReader/read a-reader true nil true)
         fn-var (or (ns-resolve *ns* fn-sym)
                    (throw (RuntimeException.
@@ -58,19 +58,19 @@
                 (.unread a-reader c)))))
     (consuming-fn a-reader)))
 
-(defn install-embeded-lang-reader! []
-  "Put ```embeded-lang-reader!``` into the static array
+(defn install-embedded-lang-reader! []
+  "Put ```embedded-lang-reader!``` into the static array
   ```clojure.lang.LispReader/dispatchMacros``` at index
   ```\\]```. After this the ```clojure.lang.LispReader``` will
-  delegate to ```embeded-lang-reader!``` when it encounters a form
-  starting with ```#[``` (i.e. an *embeded language form*)."
+  delegate to ```embedded-lang-reader!``` when it encounters a form
+  starting with ```#[``` (i.e. an *embedded language form*)."
   (let [lisp-reader-dispatch-macros
         (.get
          (doto (.getDeclaredField clojure.lang.LispReader "dispatchMacros")
            (.setAccessible true))
          nil)]
-    (aset lisp-reader-dispatch-macros \[ embeded-lang-reader!)))
+    (aset lisp-reader-dispatch-macros \[ embedded-lang-reader!)))
 
 ;; Install when loading this namespace.
-(install-embeded-lang-reader!)
+(install-embedded-lang-reader!)
 
