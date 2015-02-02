@@ -63,7 +63,10 @@
   (.println System/out (str "SQL2: " #[sql select foo.*, bar.*]))
   (.println System/out (str "ABs2: " #[ab1 aabbbb]))
   (.println System/out (str "ABs3: " #[ab2 aabbbb]))
-  ;; Bug: this does not work - why?
-  ;;(.println System/out (str "ABs4: " (#[cfg s = 'a'* 'b'*] "aabb")))
   )
-  
+
+;; Why does (#[cfg s = 'a'* 'b'*] "aabb") not work?
+;(def ccc #[cfg s = 'a'* 'b'*])
+;(ccc "aabb") ;-> [:s "a" "a" "b" "b"]
+;(#[cfg s = 'a'* 'b'*] "aabb") ;-> No matching ctor found for class clojure.core$partial$fn__4190
+

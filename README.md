@@ -167,3 +167,28 @@ yourself).
 
 So in the end we could get a **compiled embedded DSL!**
 
+## Gotchas
+
+You'll may be surprised that you cannot comment-out embedded language
+forms with ```#_``` in some cases (e.g. if ```foo``` has not been
+defined like in this example):
+
+	#_ #[foo bar]
+
+You'll have to use
+  
+	; #[foo bar]
+
+## Bugs/TODO
+
+* This works (when put into ```example.clj```):
+
+		(def ccc #[cfg s = 'a'* 'b'*])
+		(ccc "aabb") ;-> [:s "a" "a" "b" "b"]
+
+  But this doesn't:
+
+		(#[cfg s = 'a'* 'b'*] "aabb") ;-> No matching ctor found for class clojure.core$partial$fn__4190
+
+
+
