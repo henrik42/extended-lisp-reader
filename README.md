@@ -34,7 +34,10 @@ If you want to offer a non-Lisp-ish DSL, you can use one of the
 parsers (e.g. ANTLR http://www.antlr.org/, instaparse
 https://github.com/Engelberg/instaparse) available for the JVM: build
 the grammar, let the user write their input to some file and use the
-parser to consume that file.
+parser to consume that file. That will give you an AST (abstract
+syntax tree) which you have to *process* in some way -- usually this
+means you have to write some sort of *interpreter* for this
+language/AST.
 
 But sometimes you may wish to just write the DSL input **in your
 Clojure code** -- maybe like this:
@@ -69,9 +72,9 @@ The central class that parses all input
 is ```clojure.lang.LispReader```
 (https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/LispReader.java). It
 has a few things that you (as a programmer) can control from outside
-via the Clojure API. The class itself **is not part of the Clojure
-API** so anything that you do to it directly may break once you switch
-to another version of Clojure.
+via the Clojure API (see above). The class itself **is not part of the
+Clojure API** so anything that you do to it directly may break once
+you switch to another version of Clojure.
 
 The ```LispReader``` uses two arrays for dispatching on the
 input. Here I use ```clojure.lang.LispReader/dispatchMacros``` which
@@ -115,12 +118,20 @@ grammar.
 When you think about it you may ask: could I -- as a special use case
 -- define an instaparse grammar (or any other grammar) within the
 Clojure code and build a function that I could then use to process DSL
-input? Like this:
+input according to this grammar? Like this:
 
 	(def cfg (partial stream-parser/parse! insta/cfg-parser-for))
 	(def abs2 (partial stream-parser/parse! #[cfg s = 'a'* 'b'*]))
 	#[ab1 aabbbb]
-	
+
+So in this case we have **two embedded languages**:
+
+* ```cfg``` lets you define a parser/grammar with
+  ```#[cfg s = 'a'* 'b'*]```
+
+* and ```abs2``` uses this parser/grammar to consume input like
+  ```#[abs2 aabbbb]```
+
 ## Semantics
 
 **TODO: this is my PLAN to go. Not implemented yet**
@@ -129,23 +140,30 @@ When you're consuming DLS with a parser you usually build an AST
 first. Then you walk this AST and build up some data structure which
 you pass to some sort if *interpreter* (there are parsers that let you
 build that data structure as part of the parsing process;
-e.g. https://theantlrguy.atlassian.net/wiki/display/ANTLR4/Actions+and+Attributes).
+e.g. https://theantlrguy.atlassian.net/wiki/display/ANTLR4/Actions+and+Attributes). Of
+course you could skip the extra step and just interpret the AST.
 
 In Clojure we have ```clojure.lang.Compiler```. So all we really have
 to do is build the AST (that's what instaparse gives us) and then
-post-walk the tree and **produce clojure data structures** which will
-be given to the Compiler by the LispReader. This way we can (re-)use
-any macro and function we have. We can use the Lisp-ish macros and
-functions and build Lisp-ish DSLs if we like and have tests against
-that and use them as usual.
+post-walk the tree and **produce clojure data structures** which
+can/will be given to the ```Compiler``` by the ```LispReader```. So we
+(re-) use the fact, that Clojure is a compiled language instead of
+building an interpreter for our DSLs.
 
-And if we ever wanted a non-Lisp-ish DSL we can just build one and
-re-use all the tested stuff we already have. No extra
+This way we can (re-)use any macro and function we have. We can use
+the Lisp-ish macros and functions and build Lisp-ish DSLs if we like
+(and this has been done) and have tests against that and use them as
+usual.
+
+And if we ever wanted a non-Lisp-ish DSL we can just build one on top
+of that and re-use all the tested stuff we already have. No extra
 wheel-re-inventing bug-ridden ad-hoc interpreter needed (which you
 need for your usual Java solution -- see for example
 http://bkiers.blogspot.de/2011/03/7-interpreting-and-evaluating-tl-i.html;
 of course one can generate Java code as well
-http://stackoverflow.com/questions/24766006/getting-antlr-to-generate-a-script-interpreter).
+http://stackoverflow.com/questions/24766006/getting-antlr-to-generate-a-script-interpreter
+and run the compiler on that, but still you would have to build that
+yourself).
 
-**We'll get a compiled DSL!**
+So in the end we could get a **compiled embedded DSL!**
 
