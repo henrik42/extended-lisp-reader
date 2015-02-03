@@ -20,7 +20,7 @@
 
   Note that the parser should use ```:total true``` in order to be
   able to return an ```instaparse.failure/failure?``` and not throw an
-  exception when a complete successfull parse is not possible."
+  exception when a complete successful parse is not possible."
   (let [ast (insta/parse parser text :total true)
         res (when-not (insta/failure? ast) ast)]
     res))

@@ -114,7 +114,7 @@ Others have done something similar before:
 * http://fulldisclojure.blogspot.de/2009/12/how-to-write-clojure-reader-macro.html
 
 This function must consume the *head* of the input (i.e. the
-passed in ```PushbackReader```) and find a successfull parse in
+passed in ```PushbackReader```) and find a successful parse in
 terms of the grammar. The input that follows this *head* (i.e.
 the *tail*) must remain unconsumed in the ```PushbackReader``` so it can be
 consumed by further processing (driven by the ```LispReader```).
