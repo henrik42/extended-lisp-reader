@@ -41,10 +41,13 @@
 ;; stream-parser/parse!
 (def sql (partial stream-parser/parse! (parser-for "sql")))
 
-;; Das ist ein Parser, wie man ihn hat, wenn man mit instaparse arbeitet.
+;; Standard use case: people already have an instaparse parser since
+;; they've been using it before.
 (def partest-parser (instaparse/parser (io/resource "partest.bnf")))
 ;;(instaparse/parse partest-parser "[a]d" :total true)
 
+;; And now they use this parser to make a stream-consuming parser out
+;; of it.
 (def partest! (insta/parser-for partest-parser))
 ;;#[partest! [a]]
 
@@ -56,8 +59,8 @@
 ;; And you can build such a parser with an embedded language form.
 (def ab2 (partial stream-parser/parse! #[insta/cfg-parser! s = 'a'* 'b'*]))
 
-;; insta-cfg! includes the (partial .... ) around cfg-parser! so its usage
-;; is even shorter
+;; insta-cfg! includes the (partial .... ) around cfg-parser! so its
+;; usage is even shorter
 (def ab3 #[insta/insta-cfg! s = 'a'* 'b'*])
 
 ;; run this via ```lein run -m extended-lisp-reader.example```

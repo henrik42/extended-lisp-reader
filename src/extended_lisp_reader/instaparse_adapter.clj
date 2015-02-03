@@ -9,18 +9,16 @@
             [instaparse.reduction :as reduction]
             [instaparse.gll :as gll]))
 
+;; Note: do not pass in a parser that has been created by using this
+;; function since it will NOT return insta/failure? but nil!
 (defn parse [parser text]
   "Internal parser function generator. Can be used to generate parser
   function for ```extended-lisp-reader.stream-parser/parse!``` via
   ```partial```.
 
-  Applies the instaparse parser to the text. If the parser returns an
-  ```instaparse.failure/failure?``` nil is returned. Otherwise the
-  parser's result (AST) is returned.
-
-  Note that the parser should use ```:total true``` in order to be
-  able to return an ```instaparse.failure/failure?``` and not throw an
-  exception when a complete successful parse is not possible."
+  Applies the instaparse parser to the text (using ```:total
+  true```). If the parser returns an ```instaparse.failure/failure?```
+  nil is returned. Otherwise the parser's result (AST) is returned."
   (let [ast (insta/parse parser text :total true)
         res (when-not (insta/failure? ast) ast)]
     res))
@@ -44,7 +42,7 @@
   function throws the exception from ```check-grammar```. This is
   consistent with ```extended-lisp-reader.stream-parser/parse!```
   since trying to parse an even *longer head of the input text* will
-  not possibly yield any sucessfull parse.
+  not possibly yield any successful parse.
 
   It returns a parser function which parses the specified language.
 
@@ -66,7 +64,7 @@
                        :output-format :hiccup})]
           (partial parse parser)))))
 
-;; insta/cfg-parser-for is a parser that parses instaparse grammar
+;; cfg-parser-for is a parser that parses instaparse grammar
 ;; expressions. You can use it like:
 ;;
 ;; (cfg-parser-for "s = 'a'* 'b'*")
@@ -78,11 +76,10 @@
 ;; Note: if the grammar is *syntactically correct* but sematically not
 ;; (e.g. you have a symbol only on the right hand side of a grammar
 ;; rule but not on the left side), an exception is thrown. See doc for
-;; ```extended-lisp-reader.instaparse-adapter/cfg-parser-for``` for
-;; details.
+;; ```cfg-parser-for``` for details.
 ;;
-;; So cfg-parser-for is a **parser generator**. You can apply
-;; such a *generated parser* like:
+;; So cfg-parser-for is a **parser generator**. You can apply such a
+;; *generated parser* like:
 ;;
 ;; ((cfg-parser-for "s = 'a'* 'b'*") "ab")
 ;;
@@ -90,17 +87,15 @@
 ;; embedded instaparse grammars you have to wrap it with (partial
 ;; stream-parser/parse!)
 ;;
-;; So #[cfg-parser! s = 'a'* 'b'*] returns a parser that parses the specified
-;; language.
+;; So #[cfg-parser! s = 'a'* 'b'*] returns a parser that parses the
+;; specified language.
 
 ;; cfg-parser!: <fn: <reader> -> <fn: <text> -> <AST>>>
+;;((cfg-parser! (java.io.StringReader. "s = 'a'* 'b'*]...")) "aa") ; -> [:s "a" "a"]
 (def cfg-parser! (partial stream-parser/parse! cfg-parser-for))
 
+;; insta-cfg! is the stream-consuming parser that returns a
+;; stream-consuming parser so the grammar that it consumes from
+;; a stream/reader.
 ;; insta-cfg!: <fn: <reader> -> <fn: <reader> -> <AST>>>
 (def insta-cfg! #(partial stream-parser/parse! (cfg-parser! %)))
-
-;;((cfg-parser! (java.io.StringReader. "s = 'a'* 'b'*]...")) "aa") ; -> [:s "a" "a"]
-
-;; ab2: <fn: <reader> -> <AST>>
-;;(def ab2 (partial stream-parser/parse! #[cfg-parser! s = 'a'* 'b'*]))
-;;(def ab2 #[insta-cfg! s = 'a'* 'b'*])
