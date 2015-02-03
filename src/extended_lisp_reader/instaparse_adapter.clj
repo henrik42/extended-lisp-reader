@@ -1,6 +1,9 @@
 (ns extended-lisp-reader.instaparse-adapter
-  (:require [clojure.java.io :as io]
-            [extended-lisp-reader.stream-parser :as stream-parser]
+  "Functions for using instaparse parsers for processing the embedded
+  language forms. You can **define** parsers by using these forms as
+  well as use these parsers then to parse these forms. So there is no
+  need to use external files to do either."
+  (:require [extended-lisp-reader.stream-parser :as stream-parser]
             [instaparse.core :as insta]
             [instaparse.cfg :as cfg]
             [instaparse.reduction :as reduction]
@@ -18,27 +21,19 @@
   Note that the parser should use ```:total true``` in order to be
   able to return an ```instaparse.failure/failure?``` and not throw an
   exception when a complete successfull parse is not possible."
-  (let [ast (parser text)
+  (let [ast (insta/parse parser text :total true)
         res (when-not (insta/failure? ast) ast)]
     res))
 
-(defn grammar-for [grammar-id]
-  "Internal grammar loading function.
-  Loads resource ```<grammar-id>.bnf``` and throws exception if it
-  cannot be found."
-  (let [r (str grammar-id ".bnf")]
-    (or (io/resource r)
-        (throw (RuntimeException. (format "Grammar file '%s' not found." r))))))
+;; Just a note on the names: parser-for returns a stream-consuming
+;; parser. cfg-parser-for returns a string-consuming parser.
 
-(defn parser-for [grammar-id]
-  "Loads the grammar via ```grammar-for``` and builds an instaparse
-  parser for it.
-
-  Returns a parser function based on this parser which can be passed
-  to ```extended-lisp-reader.stream-parser/parse!```."
-  (let [grammar (grammar-for grammar-id)
-        parser (insta/parser grammar :string-ci true :total true)]
-    (partial parse parser)))
+(defn parser-for [p]
+  "Takes an instaparse parser and returns a stream-consuming parser
+  ```r``` that can be used in embedded language forms ```#[r ...]```."
+  (let [q (partial parse p)
+        r (partial stream-parser/parse! q)]
+    r))
 
 (defn cfg-parser-for [spec-string]
   "A parser function that parses instaparse grammars and can be passed
@@ -100,6 +95,7 @@
 
 ;; cfg-parser!: <fn: <reader> -> <fn: <text> -> <AST>>>
 (def cfg-parser! (partial stream-parser/parse! cfg-parser-for))
+
 ;; insta-cfg!: <fn: <reader> -> <fn: <reader> -> <AST>>>
 (def insta-cfg! #(partial stream-parser/parse! (cfg-parser! %)))
 

@@ -22,6 +22,13 @@ In short:
 
 		#[as-and-bs aabb] ;-> [:s "a" "a" "b" "b"]
 
+Or -- if you already have an instaparse parser (```partest-parser```
+in this example) -- do this:
+
+	(def partest-parser (instaparse/parser (io/resource "partest.bnf")))
+	(def partest! (insta/parser-for partest-parser))
+	#[partest! [a]] ;-> [:s "[" [:s "a"] "]"]
+
 ## Motivation
 
 There are several features in Clojure that help you build DSLs (macros
@@ -40,6 +47,7 @@ Some links on Clojure & DSL & reader:
 * http://www.learnr.pro/content/17979-the-joy-of-clojure-thinking-the-clojure-way/327#1341569447:13244.835007405198
 * http://clojure-log.n01se.net/date/2008-11-06.html#19:38a
 * http://stackoverflow.com/questions/5746801/what-advantage-does-common-lisp-reader-macros-have-that-clojure-does-not-have
+* This article inspired me to implement this lib: http://homepages.cwi.nl/~storm/publications/token-inter.pdf
 
 If you want to offer a non-Lisp-ish DSL, you can use one of the
 parsers (e.g. ANTLR http://www.antlr.org/, instaparse
@@ -207,17 +215,7 @@ You'll have to use
 		(#[insta/cfg-parser! s = 'a'* 'b'*] "aabb")
 		;-> java.lang.IllegalArgumentException: No matching ctor found for class clojure.core$partial$fn__4190
 
-* Change ```extended-lisp-reader.instaparse-adapter/parser-for``` so
-  that it accepts any instaparse parser (do not create that parser
-  within the function). People will have such a parser if they're
-  using instaparse and should have control on how/when to construct
-  it. Change it so that
-
-		(def sql (partial stream-parser/parse! (insta/parser-for "sql")))
-
-  becomes
-
-		(def sql (stream-parser/parser-for some-instaparse-parser))
+* Add an example showing how to in-line CSV data and *real* SQL code.
 
 * Add functionality to bring *semantics* into the processing -- i.e. a
   function that is applied to the AST and which returns the Clojure

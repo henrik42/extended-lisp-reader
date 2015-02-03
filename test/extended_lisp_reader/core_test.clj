@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
             [extended-lisp-reader.core :as core]
+            [extended-lisp-reader.example :as example]
             [extended-lisp-reader.stream-parser :as stream-parser]
             [extended-lisp-reader.instaparse-adapter :as insta]))
 
@@ -10,7 +11,7 @@
         ast (core/embedded-lang-reader! r \[)]
     [ast (slurp r)]))
 
-(def sql (partial stream-parser/parse! (insta/parser-for "sql")))
+(def sql (partial stream-parser/parse! (example/parser-for "sql")))
 (def ab1 (partial stream-parser/parse! (insta/cfg-parser-for "s = 'a'* 'b'*")))
 (def ab2 (partial stream-parser/parse! #[insta/cfg-parser! s = 'a'* 'b'*]))
 (def ab3 #[insta/insta-cfg! s = 'a'* 'b'*])
