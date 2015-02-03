@@ -5,7 +5,8 @@
   form is dictated by the function bound to <sym>.
 
   To use this extension just ```(require
-  'extended-lisp-reader.core)```.
+  'extended-lisp-reader.core)```. Loading the namespace will hook a
+  specialized reader into ```clojure.lang.LispReader```.
 
   This code has been tested with Clojure 1.5. It interacts with
   non-API aspects of ```clojure.lang.LispReader``` so you have to
@@ -32,7 +33,7 @@
   the reader/input up to (and including) the **closing ```]```**.
 
   It must return a Clojure data structure that is the *unevaluated
-  value* of the consumed input.
+  value* of the consumed input (i.e. *form* ```#[....]```)
 
   This value is returned and will thus be given to the Clojure
   compiler for compilation/evaluation. Note that macro expansion will
