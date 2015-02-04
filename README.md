@@ -222,3 +222,28 @@ You'll have to use
   data structure that can be given to the Compiler (the equivalent of
   a *form*).
 
+* Add *language escape to Clojure* to one of the example
+  grammars. E.g. use the backtick char to signal, that the next
+  (Clojure) form should be processed by the Clojure reader (i.e. the
+  LispReader) and the value of that form is the value that the
+  LispReader returns. Can this be done with instaparse? It would mean
+  that the parser delegates the analysis to some function and
+  continues the parse once the function has returned.
+
+* Usually the LispReader will return **one value** to the Compiler
+  (for one S-expression) which will evaluate it. Q: Can the LispReader
+  return a value that will be interpreted as many values (i.e. a *list
+  of values*) by the Compiler and which will be evaluated as *multiple
+  forms*? The rational of the question is that this would allow for
+  *multi value embedded language forms*. Otherwise one would have to
+  use multiple embedded language forms instead.
+
+  Example: Instead of
+  
+		#[x foo = 42] ;-> (def foo 42)
+        #[x bar = 2]  ;-> (def bar 2)
+
+  one would like to use:
+  
+        #[x foo = 42; bar = 2] ;-> (def foo 42) (def bar 2)
+
