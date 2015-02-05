@@ -215,12 +215,15 @@ You'll have to use
 		(#[insta/cfg-parser! s = 'a'* 'b'*] "aabb")
 		;-> java.lang.IllegalArgumentException: No matching ctor found for class clojure.core$partial$fn__4190
 
+* Make the stream-reading parser also parse/consume String (not only
+  PushBackReader). That can be used for ad-hoc tests etc.
+
 * Add an example showing how to in-line CSV data and *real* SQL code.
 
 * Add functionality to bring *semantics* into the processing -- i.e. a
   function that is applied to the AST and which returns the Clojure
   data structure that can be given to the Compiler (the equivalent of
-  a *form*).
+  a *form*). Use core.match for dispatch on grammar symbols.
 
 * Add *language escape to Clojure* to one of the example
   grammars. E.g. use the backtick char to signal, that the next
@@ -231,12 +234,15 @@ You'll have to use
   continues the parse once the function has returned.
 
 * Usually the LispReader will return **one value** to the Compiler
-  (for one S-expression) which will evaluate it. Q: Can the LispReader
-  return a value that will be interpreted as many values (i.e. a *list
-  of values*) by the Compiler and which will be evaluated as *multiple
-  forms*? The rational of the question is that this would allow for
-  *multi value embedded language forms*. Otherwise one would have to
-  use multiple embedded language forms instead.
+  (for one S-expression) which will evaluate it.
+
+  Q: Can the LispReader return a value that will be interpreted as
+  many values (i.e. a *list of values*) by the Compiler and which will
+  be evaluated as *multiple forms*?
+
+  The rational of the question is that this would allow for *multi
+  value embedded language forms*. Otherwise one would have to use
+  multiple embedded language forms instead.
 
   Example: Instead of
   
@@ -247,3 +253,14 @@ You'll have to use
   
         #[x foo = 42; bar = 2] ;-> (def foo 42) (def bar 2)
 
+* Change contract of the parsing function: right now it returns
+  nil. So ```extended-lisp-reader.stream-parser/parse!``` has no
+  information about **why** a tried parse has failed. So if some input
+  cannot be parsed at all and EOF is reached, we have no chance to
+  give a hint about why some parses that have been tried might have
+  failed. Chances are that we did place the closing "]" at the right
+  position but that our input did not fit the grammar. So if we could
+  give the reason for the last failure to the user, it could help a
+  lot. instaparse does give this information. We just have to hand it
+  to the stream-consuming loop, keep it there and then make it part of
+  the exception that is throwm in case of EOF.
