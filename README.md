@@ -203,6 +203,39 @@ You'll have to use
   
 	; #[foo bar]
 
+## More examples
+
+### Parsing CSV
+
+This is a simple instaparse CSV grammar (there are some things
+missing, it's just here as an example):
+
+	(def csv-file
+	  #[insta/insta-cfg!
+		file = record (line-break record)*
+		<_> = <" "+>
+		CR = '\u000D'
+		<LF> = <'\u000A'>
+		CRLF = CR LF
+		<line-break> = CRLF | CR | LF
+		<field-sep> = <#" *, *">
+		<field> = unquoted-field | quoted-field
+		<unquoted-field> = #"[a-zA-Z0-9]*"
+		quoted-field = <'"'> #"[^\"\n\r]*" <'"'>
+		record = _? field (field-sep field)* _?
+		])
+
+You can now evaluate:
+
+	#[csv-file
+	  foo , "bar man ccc", boo
+	  fred , fox
+	  ]
+
+Which gives you:
+
+	[:file [:record "foo" [:quoted-field "bar man ccc"] "boo"] [:record "fred" "fox"] [:record ""]]
+
 ## Bugs/TODO
 
 * This works (when put into ```example.clj```):
