@@ -248,10 +248,24 @@ Which gives you:
 		(#[insta/cfg-parser! s = 'a'* 'b'*] "aabb")
 		;-> java.lang.IllegalArgumentException: No matching ctor found for class clojure.core$partial$fn__4190
 
+* Doing ```slime-eval-buffer``` (I'm still using Emacs/SLIME/swank)
+  fails if the buffer contains an embedded language form and the
+  buffer is the one that installs ```extended-lisp-reader.core```
+  (e.g. when ```csv.clj``` is the first buffer evaluated). It seems
+  that first the whole buffer is read by the Clojure reader and then
+  each form is evaluated. In this case the form ```#[...]``` cannot be
+  read, because **before** the namespace form must be evaluated. The
+  same is true for ```#[insta/insta-cfg! ...]``` and
+  ```#[csv-file ...]```. So in this case you'll have to evaluate the
+  namespace form and the ```#[insta/insta-cfg! ...]``` form separatly.
+
+  I tried to have that evaluated via a reader eval but that did not
+  work (see comment in ```csv.clj```).
+
 * Make the stream-reading parser also parse/consume String (not only
   PushBackReader). That can be used for ad-hoc tests etc.
 
-* Add an example showing how to in-line CSV data and *real* SQL code.
+* Add an example showing how to in-line *real* SQL code.
 
 * Add functionality to bring *semantics* into the processing -- i.e. a
   function that is applied to the AST and which returns the Clojure

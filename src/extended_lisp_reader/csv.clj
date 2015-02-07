@@ -2,6 +2,11 @@
   (:require [extended-lisp-reader.core]
             [extended-lisp-reader.instaparse-adapter :as insta]))
 
+;; See README.md "Bugs/TODO": trying to load a namespace as a side effect via
+;; a reader eval form. Does not work though.
+;;#=(require '(extended-lisp-reader [core]))
+;;#=(require '(extended-lisp-reader [instaparse-adapter :as insta]))
+
 (def csv-file
   #[insta/insta-cfg!
     file = record (line-break record)*

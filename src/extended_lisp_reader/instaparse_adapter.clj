@@ -21,7 +21,8 @@
   nil is returned. Otherwise the parser's result (AST) is returned."
   (let [ast (insta/parse parser text :total true)
         res (when-not (insta/failure? ast) ast)]
-    (.println System/out (format "parse: ast = %s \nparse: text = %s" ast text))
+    ;; Use this to see what your parser is returning
+    ;;(.println System/out (format "parse: ast = %s \nparse: text = %s" ast text))
     res))
 
 ;; Just a note on the names: parser-for returns a stream-consuming

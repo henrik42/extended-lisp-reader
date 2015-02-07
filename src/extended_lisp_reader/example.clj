@@ -5,6 +5,7 @@
   (:require [extended-lisp-reader.core]
             [clojure.java.io :as io]
             [extended-lisp-reader.stream-parser :as stream-parser]
+            [extended-lisp-reader.csv :as csv]
             [instaparse.core :as instaparse]
             [extended-lisp-reader.instaparse-adapter :as insta]))
 
@@ -71,6 +72,10 @@
   (.println System/out (str "ABs2: " #[ab1 aabbbb]))
   (.println System/out (str "ABs3: " #[ab2 aabbbb]))
   (.println System/out (str "ABs4: " #[ab3 aabbbb]))
+  (.println System/out (str "CSV: " #[csv/csv-file
+                                      foo , "bar man ccc", boo
+                                      fred , fox
+                                      ]))
   (.println System/out (str "par1: " #[partest! [a]]))
   )
 
