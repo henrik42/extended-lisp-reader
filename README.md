@@ -241,9 +241,10 @@ Which gives you:
 	       [:record [:unquoted-field "fred"] [:unquoted-field "fox"]]
 	       [:record [:unquoted-field ""]]]
 
-Now you can transform this AST and generate the result. In this
-case we do this within one funtion but you may as well separate
-those two logical steps:
+Now you can transform this AST and generate the result (using https://github.com/killme2008/defun).
+In this case we do this within one funtion but you may as well separate
+those two logical steps (this transformation is silly -- TODO: generate XML instead of CSV to make
+it a little more usefull)
 
 	(defun/defun xform
 	  ([[:file & es]] (clj-walk/postwalk xform es)) 
@@ -254,7 +255,11 @@ those two logical steps:
 
 Now run:
 
-	(xform csv-data) ;--> ["foo,\"bar man ccc\",boo" "fred,fox" ""]
+	(xform
+	 #[csv-data!
+	   foo , "bar man ccc", boo
+	   fred , fox
+	   ]) ;--> ["foo,\"bar man ccc\",boo" "fred,fox" ""]
 
 ## Bugs/TODO
 
@@ -288,7 +293,18 @@ Now run:
 * Add an example showing how to in-line *real* SQL code.
 
 * Add an example for embedding arbitrary text (ala bash here-document
-  http://en.wikipedia.org/wiki/Here_document)
+  http://en.wikipedia.org/wiki/Here_document) maybe with *escape to
+  Clojure* via reader eval -- e.g.
+
+        (def w ({1 "one" 2 "two" 4 "four"}))
+		
+		#[here <<<HERE
+		 This pangram lists #=(w 4) a's, #=(w 1) b, #=(w 1) c, #=(w 2) d's,
+		 twenty-nine e's, eight f's, three g's, five h's, eleven i's,
+		 one j, one k, three l's, two m's, twenty-two n's, fifteen o's,
+		 two p's, one q, seven r's, twenty-six s's, nineteen t's,
+		 four u's, five v's, nine w's, two x's, four y's, and one z.
+		HERE]
 
 * Add *language escape to Clojure* to one of the example
   grammars. E.g. use the backtick char to signal, that the next
