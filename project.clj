@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [swank-clojure "1.4.3"]
+                 [defun "0.2.0-RC"]
                  [instaparse "1.3.5"]]
   :source-paths ["src"]
   :test-paths ["test"]

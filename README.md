@@ -158,21 +158,23 @@ So in this case we have **two embedded languages**:
 
 ## Semantics
 
-**TODO: this is my PLAN to go. Not implemented yet**
-
 When you're consuming DSLs with a parser you usually build an AST
 first. Then you walk this AST and build up some data structure which
 you pass to some sort if *interpreter* (there are parsers that let you
 build that data structure as part of the parsing process;
 e.g. https://theantlrguy.atlassian.net/wiki/display/ANTLR4/Actions+and+Attributes). Of
-course you could skip the extra step and just interpret the AST.
+course you could skip the extra step and just interpret the AST
+directly while walking through it.
 
 In Clojure we have ```clojure.lang.Compiler```. So all we really have
 to do is build the AST (that's what instaparse gives us) and then
-post-walk the tree and **produce clojure data structures** which
+```postwalk``` the tree and **produce clojure data structures** which
 can/will be given to the ```Compiler``` by the ```LispReader```. So we
 (re-) use the fact, that Clojure is a compiled language instead of
 building an interpreter for our DSLs.
+
+Below you'll find a simple example of how to parse an *embedded CSV
+form* and how to process it, using ```defun```.
 
 This way we can (re-)use any macro and function we have. We can use
 the Lisp-ish macros and functions and build Lisp-ish DSLs if we like
@@ -208,33 +210,51 @@ You'll have to use
 ### Parsing CSV
 
 This is a simple instaparse CSV grammar (there are some things
-missing, it's just here as an example):
+missing, it's just here to show how things work *in principle*;
+see ```src/extended_lisp_reader/csv.clj``` for the source):
 
-	(def csv-file
+	(def csv-data!
 	  #[insta/insta-cfg!
 		file = record (line-break record)*
 		<_> = <" "+>
-		CR = '\u000D'
+		<CR> = '\u000D'
 		<LF> = <'\u000A'>
-		CRLF = CR LF
+		<CRLF> = CR LF
 		<line-break> = CRLF | CR | LF
 		<field-sep> = <#" *, *">
 		<field> = unquoted-field | quoted-field
-		<unquoted-field> = #"[a-zA-Z0-9]*"
+		unquoted-field = #"[a-zA-Z0-9]*"
 		quoted-field = <'"'> #"[^\"\n\r]*" <'"'>
 		record = _? field (field-sep field)* _?
 		])
 
 You can now evaluate:
 
-	#[csv-file
-	  foo , "bar man ccc", boo
-	  fred , fox
-	  ]
+    #[csv-data!
+      foo , "bar man ccc", boo
+      fred , fox
+    ]
 
 Which gives you:
 
-	[:file [:record "foo" [:quoted-field "bar man ccc"] "boo"] [:record "fred" "fox"] [:record ""]]
+	[:file [:record [:unquoted-field "foo"] [:quoted-field "bar man ccc"] [:unquoted-field "boo"]]
+	       [:record [:unquoted-field "fred"] [:unquoted-field "fox"]]
+	       [:record [:unquoted-field ""]]]
+
+Now you can transform this AST and generate the result. In this
+case we do this within one funtion but you may as well separate
+those two logical steps:
+
+	(defun/defun xform
+	  ([[:file & es]] (clj-walk/postwalk xform es)) 
+	  ([[:unquoted-field e]] e) 
+	  ([[:quoted-field e]] (pr-str e))
+	  ([[:record & es]] (apply str (interpose "," es)))
+	  ([e] e))
+
+Now run:
+
+	(xform csv-data) ;--> ["foo,\"bar man ccc\",boo" "fred,fox" ""]
 
 ## Bugs/TODO
 
@@ -267,10 +287,8 @@ Which gives you:
 
 * Add an example showing how to in-line *real* SQL code.
 
-* Add functionality to bring *semantics* into the processing -- i.e. a
-  function that is applied to the AST and which returns the Clojure
-  data structure that can be given to the Compiler (the equivalent of
-  a *form*). Use core.match for dispatch on grammar symbols.
+* Add an example for embedding arbitrary text (ala bash here-document
+  http://en.wikipedia.org/wiki/Here_document)
 
 * Add *language escape to Clojure* to one of the example
   grammars. E.g. use the backtick char to signal, that the next
@@ -311,3 +329,7 @@ Which gives you:
   lot. instaparse does give this information. We just have to hand it
   to the stream-consuming loop, keep it there and then make it part of
   the exception that is throwm in case of EOF.
+
+* Can clojure.data.csv, clojure-csv.core and semantic-csv.core be
+  integrated with this?
+

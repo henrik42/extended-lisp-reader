@@ -72,10 +72,11 @@
   (.println System/out (str "ABs2: " #[ab1 aabbbb]))
   (.println System/out (str "ABs3: " #[ab2 aabbbb]))
   (.println System/out (str "ABs4: " #[ab3 aabbbb]))
-  (.println System/out (str "CSV: " #[csv/csv-file
+  (.println System/out (str "CSV: " #[csv/csv-data!
                                       foo , "bar man ccc", boo
                                       fred , fox
                                       ]))
+  (.println System/out (str "CSV2: " (csv/xform csv/csv-data)))
   (.println System/out (str "par1: " #[partest! [a]]))
   )
 
